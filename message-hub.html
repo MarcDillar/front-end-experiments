@@ -96,6 +96,76 @@
         opacity: 0;
       }
     }
+
+    @keyframes tiltNotification {
+      0% {
+        transform: rotate(0deg);
+      }
+      25% {
+        transform: rotate(-8deg) scale(1.05);
+      }
+      75% {
+        transform: rotate(8deg) scale(1.05);
+      }
+      100% {
+        transform: rotate(0deg);
+      }
+    }
+
+    .tilt-animation {
+      animation: tiltNotification 0.6s ease-in-out;
+    }
+
+    .chat-item {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .chat-item-new {
+      animation: slideToTop 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1));
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    @keyframes slideToTop {
+      0% {
+        transform: translateY(20px) scale(1.02);
+        opacity: 0.7;
+        box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+      }
+      50% {
+        transform: translateY(-5px) scale(1.03);
+        opacity: 0.9;
+        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+      }
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    @keyframes avatarBlink {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      25% {
+        opacity: 0.3;
+        transform: scale(0.95);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.05);
+      }
+      75% {
+        opacity: 0.3;
+        transform: scale(0.95);
+      }
+    }
+
+    .avatar-blink {
+      animation: avatarBlink 1.2s ease-in-out;
+    }
   </style>
 </head>
 <body class="bg-[#0D1025] dark:bg-gray-50 min-h-screen flex justify-center items-center p-6 text-white dark:text-gray-900 font-sans transition-colors duration-300">
@@ -282,14 +352,14 @@
       setTimeout(() => firework.remove(), 1000);
     }
 
-    function triggerCelebration() {
+    function triggerCelebration(message) {
       const colors = ['#fbbf24', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#f59e0b'];
       const fireworksContainer = document.getElementById('fireworks-container');
 
       // Show celebration text
       const celebrationText = document.createElement('div');
       celebrationText.className = 'celebration-text';
-      celebrationText.innerHTML = '🎉 All messages read! 🎉';
+      celebrationText.innerHTML = message;
       document.body.appendChild(celebrationText);
 
       // Create multiple fireworks
@@ -331,18 +401,32 @@
         const hours = Math.floor(diff / hour);
         return `${hours} hour${hours > 1 ? 's' : ''} ago`;
       } else {
-        // Format as date (e.g., "18 Jun")
-        const date = new Date(timestamp);
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return `${date.getDate()} ${months[date.getMonth()]}`;
+        // Check if it's yesterday
+        const messageDate = new Date(timestamp);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+
+        // Compare dates (ignoring time)
+        const isYesterday = messageDate.getDate() === yesterday.getDate() &&
+                           messageDate.getMonth() === yesterday.getMonth() &&
+                           messageDate.getFullYear() === yesterday.getFullYear();
+
+        if (isYesterday || (diff >= day && diff < 2 * day)) {
+          return "Yesterday";
+        } else {
+          // Format as date (e.g., "18 Jun")
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return `${messageDate.getDate()} ${months[messageDate.getMonth()]}`;
+        }
       }
     }
 
     const chats = [
       {
         name: "Caleb Waters",
-        msg: "Planning to visit Las Vegas or any other vacational",
+        msg: "Hey, are you free this weekend? I'm thinking about that trip to Vegas we discussed!",
         last_message: Date.now() - (3 * 60 * 60 * 1000), // 3 hours ago
         color: "text-yellow-400",
         newMessages: 2,
@@ -351,7 +435,7 @@
       },
       {
         name: "Manuel Lindsey",
-        msg: "Chances are unless you are very lucky you will go thru many",
+        msg: "Thanks for the code review! I've made the changes you suggested and pushed them.",
         last_message: Date.now() - (2 * 60 * 60 * 1000), // 2 hours ago
         color: "text-green-400",
         newMessages: 0,
@@ -359,7 +443,7 @@
       },
       {
         name: "Mark George",
-        msg: "Planning to visit Las Vegas or any other vacational",
+        msg: "Can we reschedule tomorrow's meeting? Something urgent came up at work.",
         last_message: Date.now() - (24 * 60 * 60 * 1000), // Yesterday
         color: "text-blue-400",
         newMessages: 3,
@@ -368,7 +452,7 @@
       },
       {
         name: "Lou Fields",
-        msg: "Planning to visit Las Vegas or any other vacational",
+        msg: "The presentation went really well! The client loved our proposal 🎉",
         last_message: Date.now() - (25 * 60 * 60 * 1000), // Yesterday
         color: "text-red-400",
         newMessages: 1,
@@ -377,7 +461,7 @@
       },
       {
         name: "Devin Smith",
-        msg: "Planning to visit Las Vegas or any other vacational",
+        msg: "Don't forget about the team lunch next Friday. Looking forward to it!",
         last_message: new Date('2025-06-18').getTime(), // 18 Jun
         color: "text-gray-400",
         newMessages: 0,
@@ -386,7 +470,7 @@
       },
       {
         name: "Sarah",
-        msg: "Hey! How's the project going?",
+        msg: "Just sent you the latest design mockups. Let me know what you think!",
         last_message: Date.now() - (30 * 1000), // 30 seconds ago (will show "Just now")
         color: "text-purple-400",
         newMessages: 1,
@@ -395,7 +479,7 @@
       },
       {
         name: "Alex Rodriguez",
-        msg: "Meeting scheduled for tomorrow at 2 PM",
+        msg: "Quick question about the database schema - should we add that index?",
         last_message: Date.now() - (30 * 60 * 1000), // 30 min ago
         color: "text-pink-400",
         newMessages: 2,
@@ -421,13 +505,13 @@
       // 🎆 Trigger fireworks if all messages are now read and there were unread messages before
       if (previousTotal > 0 && totalNew === 0) {
         setTimeout(() => {
-          triggerCelebration();
+          triggerCelebration('🎉 All messages read! 🎉');
         }, 300); // Small delay to let the UI update first
       }
     }
 
     // 🧱 Render chat list
-    function renderChats(filteredChats = chats) {
+    function renderChats(filteredChats = chats, highlightUser = null) {
       chatList.innerHTML = "";
 
       // � Sort chats by last message timestamp (most recent first)
@@ -458,10 +542,15 @@
         return;
       }
 
-      sortedChats.forEach(chat => {
+      sortedChats.forEach((chat, index) => {
         const item = document.createElement("div");
-        item.className =
-          "bg-[#1F233C] dark:bg-gray-50 p-4 rounded-lg flex justify-between items-start transition-all duration-200 hover:bg-[#2A2F50] dark:hover:bg-gray-100 cursor-pointer group relative overflow-hidden";
+        const isNewMessage = highlightUser && chat.name === highlightUser;
+
+        item.className = `
+          chat-item bg-[#1F233C] dark:bg-gray-50 p-4 rounded-lg flex justify-between items-start
+          transition-all duration-200 hover:bg-[#2A2F50] dark:hover:bg-gray-100 cursor-pointer
+          group relative overflow-hidden ${isNewMessage ? 'chat-item-new' : ''}
+        `.replace(/\s+/g, ' ').trim();
 
         const mainContent = document.createElement("div");
         mainContent.className = "flex items-start flex-1";
@@ -516,6 +605,13 @@
         });
 
         chatList.appendChild(item);
+
+        // Remove highlight animation after it completes
+        if (isNewMessage) {
+          setTimeout(() => {
+            item.classList.remove('chat-item-new');
+          }, 600);
+        }
       });
     }
 
@@ -527,6 +623,11 @@
     searchInput.addEventListener("keydown", e => {
       if (e.key === "Enter") {
         const term = e.target.value.toLowerCase().trim();
+        if (term === 'cat') {
+            showToast('🐾 You found the secret cat chat!', 'info');
+            renderChats([{ name: "Secret Cat 😼", msg: "Purr... you found me!", last_message: Date.now(), color: "text-pink-400", newMessages: 0 }]);
+            return;
+        }
         const filtered = chats.filter(
           chat =>
             chat.name.toLowerCase().includes(term) ||
@@ -586,8 +687,67 @@
       }
     }
 
+    const secret = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    let keys = [];
+    window.addEventListener('keydown', e => {
+        keys.push(e.key);
+        if (keys.slice(-secret.length).join('') === secret.join('')) {
+            triggerCelebration('👾 Developer Mode Activated!');
+        }
+    });
+
+    themeToggle.addEventListener('dblclick', () => {
+        showToast('Disco Mode Activated!', 'info');
+        const disco = setInterval(() => {
+            document.body.style.backgroundColor = `hsl(${Math.random()*360}, 70%, 30%)`;
+        }, 200);
+        setTimeout(() => {
+            clearInterval(disco);
+            document.body.style.backgroundColor = '';
+        }, 5000);
+    });
+
     // Theme toggle event listener
     themeToggle.addEventListener('click', toggleTheme);
-  </script>
+
+    setInterval(() => {
+        const user = chats[Math.floor(Math.random()*chats.length)];
+        user.newMessages += 1;
+        user.last_message = Date.now(); // Update timestamp to current time
+        updateNotification();
+        renderChats(chats, user.name); // Pass the user name to highlight
+
+        // Show toast notification for new message
+        showToast(`New message from ${user.name} 💬`, 'info');
+
+        // Add tilt animation to the user's message count badge and blink avatar
+        setTimeout(() => {
+          const chatItems = document.querySelectorAll('#chat-list > div');
+          chatItems.forEach(item => {
+            const nameElement = item.querySelector('.font-semibold');
+            if (nameElement && nameElement.textContent === user.name) {
+              // Tilt animation for message badge
+              const badge = item.querySelector('.bg-green-500');
+              if (badge) {
+                badge.classList.add('tilt-animation');
+                setTimeout(() => {
+                  badge.classList.remove('tilt-animation');
+                }, 600);
+              }
+
+              // Blink animation for avatar
+              const avatar = item.querySelector('.w-12.h-12');
+              if (avatar) {
+                avatar.classList.add('avatar-blink');
+                setTimeout(() => {
+                  avatar.classList.remove('avatar-blink');
+                }, 1200);
+              }
+            }
+          });
+        }, 100); // Small delay to ensure DOM is updated
+    }, 20000);
+
+</script>
 </body>
 </html>
