@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Front-End Playground 🎨</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body class="bg-[#0E0A1F] text-white min-h-screen flex flex-col items-center justify-start font-sans">
+
+  <!-- Header -->
+  <header class="mt-12 text-center">
+    <h1 class="text-4xl font-bold mb-2 tracking-tight">🎨 Marc Dillar's Front-End Playground</h1>
+    <p class="text-gray-400 max-w-lg mx-auto">
+      A growing collection of small, creative front-end experiments — UI components, micro-interactions, and CSS/JS art.
+    </p>
+  </header>
+
+  <!-- Cards Grid -->
+  <main class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-12 px-6 max-w-6xl w-full" id="cards">
+    <!-- Example card: Message Dashboard -->
+    <div class="bg-[#191B2F] p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold group-hover:text-indigo-400 transition-colors">💬 Message Dashboard</h2>
+        <span class="text-xs text-gray-400">UI / JS</span>
+      </div>
+      <p class="text-gray-400 text-sm mb-4">A dark-themed interactive message dashboard built with TailwindCSS & JS animations.</p>
+      <a href="./message-ui/index.html" target="_blank" class="inline-block bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">View Demo</a>
+    </div>
+
+    <!-- Example card: Neon Button -->
+    <div class="bg-[#191B2F] p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold group-hover:text-pink-400 transition-colors">⚡ Neon Button</h2>
+        <span class="text-xs text-gray-400">CSS / Glow</span>
+      </div>
+      <p class="text-gray-400 text-sm mb-4">A glowing button with pure CSS gradients and subtle hover animations.</p>
+      <a href="./neon-button/index.html" target="_blank" class="inline-block bg-pink-500 hover:bg-pink-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">View Demo</a>
+    </div>
+
+    <!-- Example card: Particle Background -->
+    <div class="bg-[#191B2F] p-6 rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold group-hover:text-teal-400 transition-colors">🌌 Particle Background</h2>
+        <span class="text-xs text-gray-400">Canvas / JS</span>
+      </div>
+      <p class="text-gray-400 text-sm mb-4">A mesmerizing animated particle background built using vanilla JS and canvas.</p>
+      <a href="./particle-bg/index.html" target="_blank" class="inline-block bg-teal-500 hover:bg-teal-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">View Demo</a>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-16 text-center text-gray-500 text-sm pb-8">
+    Built with TailwindCSS · © <span id="year"></span> Marc Dillar
+  </footer>
+
+  <script>
+    // GSAP intro animation
+    gsap.from("header h1", { opacity: 0, y: -30, duration: 1 });
+    gsap.from("header p", { opacity: 0, y: 20, duration: 1, delay: 0.3 });
+    gsap.from("#cards > div", {
+      opacity: 0,
+      y: 40,
+      duration: 0.6,
+      stagger: 0.2,
+      delay: 0.6
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
