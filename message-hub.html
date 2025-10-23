@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Messages Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <style>
+    /* 🎆 Fireworks Animation */
+    .fireworks-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .firework {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: firework 1s ease-out forwards;
+    }
+
+    .firework-spark {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      animation: spark 1.5s ease-out forwards;
+    }
+
+    @keyframes firework {
+      0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 1;
+      }
+      50% {
+        transform: translateY(50vh) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(50vh) scale(0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes spark {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--spark-x), var(--spark-y)) scale(0);
+        opacity: 0;
+      }
+    }
+
+    .celebration-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10000;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #10b981;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      animation: celebrationBounce 2s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes celebrationBounce {
+      0% {
+        transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+        opacity: 0;
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.2) rotate(0deg);
+        opacity: 1;
+      }
+      80% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(0) rotate(180deg);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#0D1025] dark:bg-gray-50 min-h-screen flex justify-center items-center p-6 text-white dark:text-gray-900 font-sans transition-colors duration-300">
+
+  <!-- Fireworks Container -->
+  <div id="fireworks-container" class="fireworks-container"></div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2">
+    <!-- Toast messages will be dynamically added here -->
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+
+    <!-- Chat List -->
+    <div class="bg-[#15182E] dark:bg-white rounded-xl shadow-lg p-4 space-y-4 md:col-span-2 transition-colors duration-300">
+      <div class="space-y-3" id="chat-list">
+        <!-- Chat items dynamically generated -->
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Theme Toggle -->
+      <div class="bg-[#15182E] dark:bg-gray-100 rounded-xl px-4 py-3 transition-all duration-300">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span id="theme-icon" class="text-sm">🌙</span>
+            <span class="text-sm text-gray-400 dark:text-gray-600" id="theme-text">Dark Mode</span>
+          </div>
+          <button id="theme-toggle" class="relative inline-flex h-5 w-9 items-center rounded-full bg-gray-600 dark:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-100">
+            <span class="sr-only">Toggle theme</span>
+            <span id="theme-toggle-dot" class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform translate-x-1 dark:translate-x-5"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="relative">
+        <input
+          type="text"
+          placeholder="Search"
+          class="w-full bg-[#15182E] dark:bg-white text-white dark:text-gray-900 px-4 py-2 rounded-full pl-10 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 dark:border dark:border-gray-300"
+        />
+        <svg
+          class="absolute left-3 top-2.5 w-5 h-5 text-gray-400 dark:text-gray-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+
+      <!-- Message Notification -->
+      <div class="relative bg-[#15182E] dark:bg-white text-center py-8 rounded-xl transition-all duration-300" id="notif-box">
+        <div class="absolute -top-2 right-1/2 translate-x-1/2">
+          <div id="notif-count" class="bg-green-500 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold animate-bounce shadow-md">
+            0
+          </div>
+        </div>
+        <svg class="mx-auto w-8 h-8 mb-2 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h5m-5 4h10M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <p class="text-sm text-gray-400 dark:text-gray-600">You have</p>
+        <p id="notif-text" class="text-lg font-semibold dark:text-gray-900">0 new messages</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 🍞 Toast notification system
+    function showToast(message, type = 'success') {
+      const toastContainer = document.getElementById('toast-container');
+
+      const toast = document.createElement('div');
+      toast.className = `
+        bg-[#15182E] dark:bg-white border-l-4 ${type === 'success' ? 'border-green-400' : 'border-blue-400'}
+        text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-lg transform translate-x-full
+        transition-all duration-300 ease-in-out max-w-sm min-w-[250px] dark:shadow-xl
+      `;
+
+      toast.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 ${type === 'success' ? 'bg-green-400' : 'bg-blue-400'} rounded-full animate-pulse"></div>
+            <span class="text-sm">${message}</span>
+          </div>
+          <button class="text-gray-400 dark:text-gray-600 hover:text-white dark:hover:text-gray-900 ml-4" onclick="this.parentElement.parentElement.remove()">✕</button>
+        </div>
+      `;
+
+      toastContainer.appendChild(toast);
+
+      // Animate in
+      setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+      }, 10);
+
+      // Auto remove after 4 seconds
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.classList.add('translate-x-full');
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 4000);
+    }
+
+    // 👤 Generate avatar with initials
+    function generateAvatar(name, color, isActive = false) {
+      // Extract initials from name (first letter of each word, max 2)
+      const initials = name
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase())
+        .slice(0, 2)
+        .join('');
+
+      // Color mapping for avatars based on the existing color scheme
+      const avatarColors = {
+        'text-yellow-400': 'bg-yellow-500',
+        'text-green-400': 'bg-green-500',
+        'text-blue-400': 'bg-blue-500',
+        'text-red-400': 'bg-red-500',
+        'text-gray-400': 'bg-gray-500',
+        'text-purple-400': 'bg-purple-500',
+        'text-pink-400': 'bg-pink-500',
+        'text-indigo-400': 'bg-indigo-500'
+      };
+
+      const bgColor = avatarColors[color] || 'bg-blue-500';
+
+      // Online/Offline status indicator for all users (positioned on top-right border)
+      const statusIndicator = isActive ?
+        `<div class="absolute top-0 right-3 w-3 h-3 bg-green-400 rounded-full border-2 border-white dark:border-gray-50 animate-pulse" title="Online"></div>` :
+        `<div class="absolute top-0 right-3 w-3 h-3 bg-red-400 rounded-full border-2 border-white dark:border-gray-50" title="Offline"></div>`;
+
+      return `
+        <div class="relative">
+          <div class="w-12 h-12 ${bgColor} rounded-full flex items-center justify-center text-white font-bold text-sm mr-3 shadow-md ring-2 ring-white dark:ring-gray-200 flex-shrink-0 transition-transform group-hover:scale-105">
+            ${initials}
+          </div>
+          ${statusIndicator}
+        </div>
+      `;
+    }
+
+    // 🎆 Fireworks Animation System
+    function createFirework(x, y, color) {
+      const firework = document.createElement('div');
+      firework.className = 'firework';
+      firework.style.left = x + 'px';
+      firework.style.backgroundColor = color;
+
+      // Create sparks
+      setTimeout(() => {
+        for (let i = 0; i < 12; i++) {
+          const spark = document.createElement('div');
+          spark.className = 'firework-spark';
+          spark.style.left = x + 'px';
+          spark.style.top = y + 'px';
+          spark.style.backgroundColor = color;
+
+          const angle = (i * 30) * Math.PI / 180;
+          const distance = 50 + Math.random() * 100;
+          const sparkX = Math.cos(angle) * distance;
+          const sparkY = Math.sin(angle) * distance;
+
+          spark.style.setProperty('--spark-x', sparkX + 'px');
+          spark.style.setProperty('--spark-y', sparkY + 'px');
+
+          document.getElementById('fireworks-container').appendChild(spark);
+
+          setTimeout(() => spark.remove(), 1500);
+        }
+      }, 500);
+
+      document.getElementById('fireworks-container').appendChild(firework);
+      setTimeout(() => firework.remove(), 1000);
+    }
+
+    function triggerCelebration() {
+      const colors = ['#fbbf24', '#10b981', '#3b82f6', '#ef4444', '#8b5cf6', '#f59e0b'];
+      const fireworksContainer = document.getElementById('fireworks-container');
+
+      // Show celebration text
+      const celebrationText = document.createElement('div');
+      celebrationText.className = 'celebration-text';
+      celebrationText.innerHTML = '🎉 All messages read! 🎉';
+      document.body.appendChild(celebrationText);
+
+      // Create multiple fireworks
+      for (let i = 0; i < 8; i++) {
+        setTimeout(() => {
+          const x = Math.random() * window.innerWidth;
+          const y = window.innerHeight * 0.3 + Math.random() * window.innerHeight * 0.4;
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          createFirework(x, y, color);
+        }, i * 200);
+      }
+
+      // Clean up celebration text
+      setTimeout(() => {
+        celebrationText.remove();
+      }, 2000);
+
+      // Clean up fireworks container
+      setTimeout(() => {
+        fireworksContainer.innerHTML = '';
+      }, 3000);
+    }
+
+    // ⏰ Format last message time dynamically
+    function formatLastMessageTime(timestamp) {
+      const now = Date.now();
+      const diff = now - timestamp;
+
+      const minute = 60 * 1000;
+      const hour = 60 * minute;
+      const day = 24 * hour;
+
+      if (diff < minute) {
+        return "Just now";
+      } else if (diff < hour) {
+        const minutes = Math.floor(diff / minute);
+        return `${minutes} min ago`;
+      } else if (diff < day) {
+        const hours = Math.floor(diff / hour);
+        return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+      } else {
+        // Format as date (e.g., "18 Jun")
+        const date = new Date(timestamp);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${date.getDate()} ${months[date.getMonth()]}`;
+      }
+    }
+
+    const chats = [
+      {
+        name: "Caleb Waters",
+        msg: "Planning to visit Las Vegas or any other vacational",
+        last_message: Date.now() - (3 * 60 * 60 * 1000), // 3 hours ago
+        color: "text-yellow-400",
+        newMessages: 2,
+        isStarred: true,
+        active: false
+      },
+      {
+        name: "Manuel Lindsey",
+        msg: "Chances are unless you are very lucky you will go thru many",
+        last_message: Date.now() - (2 * 60 * 60 * 1000), // 2 hours ago
+        color: "text-green-400",
+        newMessages: 0,
+        active: true
+      },
+      {
+        name: "Mark George",
+        msg: "Planning to visit Las Vegas or any other vacational",
+        last_message: Date.now() - (24 * 60 * 60 * 1000), // Yesterday
+        color: "text-blue-400",
+        newMessages: 3,
+        isStarred: true,
+        active: true
+      },
+      {
+        name: "Lou Fields",
+        msg: "Planning to visit Las Vegas or any other vacational",
+        last_message: Date.now() - (25 * 60 * 60 * 1000), // Yesterday
+        color: "text-red-400",
+        newMessages: 1,
+        isStarred: true,
+        active: false
+      },
+      {
+        name: "Devin Smith",
+        msg: "Planning to visit Las Vegas or any other vacational",
+        last_message: new Date('2025-06-18').getTime(), // 18 Jun
+        color: "text-gray-400",
+        newMessages: 0,
+        isStarred: false,
+        active: false
+      },
+      {
+        name: "Sarah",
+        msg: "Hey! How's the project going?",
+        last_message: Date.now() - (30 * 1000), // 30 seconds ago (will show "Just now")
+        color: "text-purple-400",
+        newMessages: 1,
+        isStarred: true,
+        active: true
+      },
+      {
+        name: "Alex Rodriguez",
+        msg: "Meeting scheduled for tomorrow at 2 PM",
+        last_message: Date.now() - (30 * 60 * 1000), // 30 min ago
+        color: "text-pink-400",
+        newMessages: 2,
+        isStarred: false,
+        active: false
+      }
+    ];
+
+    const chatList = document.getElementById("chat-list");
+    const searchInput = document.querySelector('input[type="text"]');
+    const notifCount = document.getElementById("notif-count");
+    const notifText = document.getElementById("notif-text");
+
+    // 🔄 Update total unread messages
+    function updateNotification() {
+      const previousTotal = parseInt(notifCount.textContent) || 0;
+      const totalNew = chats.reduce((sum, c) => sum + c.newMessages, 0);
+
+      notifCount.textContent = totalNew;
+      notifText.textContent = `${totalNew} new message${totalNew !== 1 ? "s" : ""}`;
+      notifCount.classList.toggle("hidden", totalNew === 0);
+
+      // 🎆 Trigger fireworks if all messages are now read and there were unread messages before
+      if (previousTotal > 0 && totalNew === 0) {
+        setTimeout(() => {
+          triggerCelebration();
+        }, 300); // Small delay to let the UI update first
+      }
+    }
+
+    // 🧱 Render chat list
+    function renderChats(filteredChats = chats) {
+      chatList.innerHTML = "";
+
+      // � Sort chats by last message timestamp (most recent first)
+      const sortedChats = [...filteredChats].sort((a, b) => b.last_message - a.last_message);
+
+      // �🔍 Empty state when no chats found
+      if (sortedChats.length === 0) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "flex flex-col items-center justify-center py-12 px-6 text-center";
+
+        emptyState.innerHTML = `
+          <div class="mb-4">
+            <svg class="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-600 mb-2">No chats found</h3>
+          <p class="text-sm text-gray-400 dark:text-gray-500 mb-4 max-w-sm">
+            We couldn't find any conversations matching your search. Try different keywords or check your spelling.
+          </p>
+          <button onclick="document.querySelector('input[type=text]').value = ''; renderChats(chats);"
+                  class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-50">
+            Clear search
+          </button>
+        `;
+
+        chatList.appendChild(emptyState);
+        return;
+      }
+
+      sortedChats.forEach(chat => {
+        const item = document.createElement("div");
+        item.className =
+          "bg-[#1F233C] dark:bg-gray-50 p-4 rounded-lg flex justify-between items-start transition-all duration-200 hover:bg-[#2A2F50] dark:hover:bg-gray-100 cursor-pointer group relative overflow-hidden";
+
+        const mainContent = document.createElement("div");
+        mainContent.className = "flex items-start flex-1";
+
+        // Generate avatar with online/offline status
+        const avatar = generateAvatar(chat.name, chat.color, chat.active || false);
+
+        const textContent = document.createElement("div");
+        textContent.classList.add("flex-1");
+
+        textContent.innerHTML = `
+          <div class="flex items-center gap-2 ${chat.color}">
+            ${chat.isStarred ? '<span>★</span>' : '<span>✦</span>'}
+            <span class="font-semibold">${chat.name}</span>
+            ${
+              chat.newMessages > 0
+                ? `<span class="ml-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">${chat.newMessages}</span>`
+                : ""
+            }
+          </div>
+          <div class="text-sm text-gray-400 dark:text-gray-600 mt-1">${chat.msg}</div>
+        `;
+
+        // Combine avatar and text content
+        mainContent.innerHTML = avatar + textContent.outerHTML;
+
+        const right = document.createElement("div");
+        right.innerHTML = `<span class="text-xs text-gray-400 dark:text-gray-500">${formatLastMessageTime(chat.last_message)}</span>`;
+
+        item.appendChild(mainContent);
+        item.appendChild(right);
+
+        if (chat.active) {
+          const statusBar = document.createElement("div");
+          statusBar.className = "absolute left-0 top-0 h-full w-1 bg-green-400 animate-pulse";
+          item.appendChild(statusBar);
+        }
+
+        // 🖱 Click → mark messages as read
+        item.addEventListener("click", () => {
+          if (chat.newMessages > 0) {
+            chat.newMessages = 0;
+            renderChats(filteredChats);
+            updateNotification();
+            showToast(`Messages from ${chat.name} are now marked as read ✅`, 'success');
+          } else {
+            showToast(`No new messages from ${chat.name}.`, 'info');
+          }
+
+          item.classList.add("scale-95");
+          setTimeout(() => item.classList.remove("scale-95"), 150);
+        });
+
+        chatList.appendChild(item);
+      });
+    }
+
+    // Initial load
+    renderChats();
+    updateNotification();
+
+    // 🔍 Filter on Enter key
+    searchInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        const term = e.target.value.toLowerCase().trim();
+        const filtered = chats.filter(
+          chat =>
+            chat.name.toLowerCase().includes(term) ||
+            chat.msg.toLowerCase().includes(term)
+        );
+        renderChats(filtered);
+      }
+    });
+
+    // 🌓 Theme Toggle Functionality
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeToggleDot = document.getElementById('theme-toggle-dot');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+
+    // Check for saved theme preference or default to 'dark'
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+
+    // Apply saved theme on page load
+    if (currentTheme === 'light') {
+      document.documentElement.classList.add('dark');
+      updateThemeUI('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      updateThemeUI('dark');
+    }
+
+    function updateThemeUI(theme) {
+      if (theme === 'light') {
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Light Mode';
+        themeToggleDot.classList.add('translate-x-5');
+        themeToggleDot.classList.remove('translate-x-1');
+      } else {
+        themeIcon.textContent = '🌙';
+        themeText.textContent = 'Dark Mode';
+        themeToggleDot.classList.add('translate-x-1');
+        themeToggleDot.classList.remove('translate-x-5');
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+
+      if (isDark) {
+        // Switch to dark mode
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'dark');
+        updateThemeUI('dark');
+        showToast('Switched to Dark Mode 🌙', 'info');
+      } else {
+        // Switch to light mode
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'light');
+        updateThemeUI('light');
+        showToast('Switched to Light Mode ☀️', 'info');
+      }
+    }
+
+    // Theme toggle event listener
+    themeToggle.addEventListener('click', toggleTheme);
+  </script>
+</body>
+</html>
